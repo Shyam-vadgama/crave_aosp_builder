@@ -21,8 +21,7 @@ jobs:
 
       - name: Setup crave
         run: |
-          TAG=$(curl -sL https://api.github.com/repos/accupara/crave/releases/latest | grep tag_name | cut -d'"' -f4)
-          sudo curl -sL "https://github.com/accupara/crave/releases/download/$TAG/crave-$TAG-linux-amd64.bin" -o /usr/local/bin/crave
+          sudo curl -sL "https://github.com/accupara/crave/releases/download/0.2-7220/crave-0.2-7220-linux-amd64.bin" -o /usr/local/bin/crave
           sudo chmod +x /usr/local/bin/crave
           cat > ~/crave.conf << EOF
           {
