@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       clean:
-        description: 'Clean build (delete local_manifest & re-init)?'
+        description: 'Clean build?'
         type: boolean
         default: false
 
@@ -22,10 +22,9 @@ jobs:
       - name: Setup crave
         run: |
           TAG=$(curl -sL https://api.github.com/repos/accupara/crave/releases/latest | grep tag_name | cut -d'"' -f4)
-          CRAVE_URL="https://github.com/accupara/crave/releases/download/$TAG/crave-$TAG-linux-amd64.bin"
-          sudo curl -sL "$CRAVE_URL" -o /usr/local/bin/crave
+          sudo curl -sL "https://github.com/accupara/crave/releases/download/$TAG/crave-$TAG-linux-amd64.bin" -o /usr/local/bin/crave
           sudo chmod +x /usr/local/bin/crave
-          cat > ~/crave.conf << 'EOF'
+          cat > ~/crave.conf << EOF
           {
             "username": "${{ secrets.CRAVE_USERNAME }}",
             "headers": {
@@ -38,8 +37,22 @@ jobs:
           }
           EOF
 
+      - name: Install repo
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y repo
+
+      - name: Setup project folder
+        run: |
+          sudo mkdir -p /crave-devspaces
+          sudo chmod 777 /crave-devspaces
+          mkdir -p /crave-devspaces/Lineage23
+          cd /crave-devspaces/Lineage23
+          repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1
+
       - name: 🏗️ Build ROM on crave.io
         run: |
+          cd /crave-devspaces/Lineage23
           crave run --no-patch -- "rm -rf .repo/local_manifests; \
           repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1; \
           git clone https://github.com/shyam-vadgama/local_manifest/ -b lineage-23.2 .repo/local_manifests; \
