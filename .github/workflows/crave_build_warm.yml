@@ -25,8 +25,7 @@ jobs:
           CRAVE_URL="https://github.com/accupara/crave/releases/download/$TAG/crave-$TAG-linux-amd64.bin"
           sudo curl -sL "$CRAVE_URL" -o /usr/local/bin/crave
           sudo chmod +x /usr/local/bin/crave
-          mkdir -p ~/.crave
-          cat > ~/.crave/crave.conf << 'EOF'
+          cat > ~/crave.conf << 'EOF'
           {
             "username": "${{ secrets.CRAVE_USERNAME }}",
             "headers": {
