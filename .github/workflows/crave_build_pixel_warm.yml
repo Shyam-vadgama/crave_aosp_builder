@@ -61,7 +61,7 @@ jobs:
           for combo in pixel_warm-userdebug pixel_warm-user pixel_warm-eng aosp_warm-userdebug; do \
             lunch \$combo 2>/dev/null && break; \
           done; \
-          make bacon"
+          m pixelos"
 
       - name: 📥 Pull build artifacts
         if: success()
