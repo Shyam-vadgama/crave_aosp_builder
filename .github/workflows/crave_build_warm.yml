@@ -1,0 +1,64 @@
+name: 🏗️ Build LineageOS 23.2 for warm (crave.io)
+
+on:
+  workflow_dispatch:
+    inputs:
+      clean:
+        description: 'Clean build (delete local_manifest & re-init)?'
+        type: boolean
+        default: false
+
+concurrency:
+  group: crave-warm
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 600
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup crave
+        run: |
+          curl -s https://raw.githubusercontent.com/accupara/crave/master/get_crave.sh | bash -s --
+          mkdir -p ~/.crave
+          cat > ~/.crave/crave.conf << 'EOF'
+          {
+            "username": "${{ secrets.CRAVE_USERNAME }}",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "${{ secrets.CRAVE_TOKEN }}",
+              "User-Agent": "Crave"
+            },
+            "projects": [],
+            "server": "https://foss.crave.io/api"
+          }
+          EOF
+
+      - name: 🏗️ Build ROM on crave.io
+        run: |
+          ~/crave run --no-patch -- "rm -rf .repo/local_manifests; \
+          repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1; \
+          git clone https://github.com/shyam-vadgama/local_manifest/ -b lineage-23.2 .repo/local_manifests; \
+          /opt/crave/resync.sh; \
+          source build/envsetup.sh; \
+          lunch lineage_warm-ap4a-userdebug; \
+          mka bacon"
+
+      - name: 📥 Pull build artifacts
+        if: success()
+        run: |
+          mkdir -p out/target/product/warm
+          ~/crave pull out/target/product/warm/ --file "*.zip" --file "*.md5sum" --file "*.sha256sum" -d out/target/product/warm/
+
+      - name: 📦 Create GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="lineage-23.2-$(date +'%Y%m%d-%H%M')"
+          gh release create "$TAG" out/target/product/warm/*.zip \
+            --repo ${{ github.repository }} \
+            --title "LineageOS 23.2 for warm ($TAG)" \
+            --notes "Automated build via crave.io"

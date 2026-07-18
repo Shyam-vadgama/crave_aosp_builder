@@ -1,0 +1,48 @@
+name: Build LineageOS for warm
+on:
+  workflow_dispatch:
+    inputs:
+      fresh_install:
+        description: 'Clean everything and start fresh?'
+        type: boolean
+        required: false
+        default: false
+
+concurrency:
+  group: building_warm
+  cancel-in-progress: false
+
+jobs:
+  build:
+    timeout-minutes: 2400
+    runs-on: self-hosted
+    steps:
+      - name: Clean Everything
+        if: ${{ inputs.fresh_install }}
+        run: find . -mindepth 1 -delete
+
+      - name: Checkout
+        run: |
+          rm -rf __rom-build_scripts__
+          git clone ${{ github.server_url }}/${{ github.repository }} __rom-build_scripts__ -b ${{ github.ref_name }} --depth 1 --single-branch
+
+      - name: Build ROM
+        run: |
+          source __rom-build_scripts__/._env
+          for f in _utils.sh _build.sh ._env $REPOS_JSON; do
+            cp -r __rom-build_scripts__/$f .
+          done
+          chmod +x _build.sh
+          ./_build.sh
+        env:
+          RELEASE_GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Upload Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Build-Logs
+          path: "*.log"

@@ -1,90 +1,52 @@
 # Required: Device codename
-DEVICE="vince"
-ROM_NAME="RiceDroid"
+DEVICE="warm"
+ROM_NAME="LineageOS"
 
 # Required: git username
-GIT_NAME="ROMBUILDER"
+GIT_NAME="shyam-vadgama"
 # Required: git email
-GIT_EMAIL="rom-builder@rest.eu.org"
+GIT_EMAIL="shyamvadgama76@gmail.com"
 
 # Required: Personal Access Token from GitHub with permissions repo, admin:repo_hook, user
 # Better set it as a secret in your GitHub repo settings
-# RELEASE_GITHUB_TOKEN="" 
+# RELEASE_GITHUB_TOKEN=""
 
 # Required: Repository owner/repo to upload and release build files
-GITHUB_RELEASE_REPO="rom-builder/$DEVICE-$ROM_NAME"
+GITHUB_RELEASE_REPO="shyam-vadgama/warm-LineageOS"
 
 # Required: To upload the build, set this
 RELEASE_FILES_PATTERN="*.zip|*.md5sum|*.sha256sum"
 
 # Required: Repos to clone
-# Example repos.json:
-# {
-#     "repos": [
-#         {
-#             "repo": "https://github.com/owner/repo.git",
-#             "dir": "device/vendor/dir",
-#             "branch": "branch" # Optional
-#         },
-#         {
-#             "repo": "https://gitlab.com/owner/repo.git",
-#             "dir": "device/vendor/dir"
-#         },
-#     ]
-# }
 REPOS_JSON="repos.json"
 
 # Required: Output directory for release files
 RELEASE_OUT_DIR="out/target/product/$DEVICE"
 
-# Optional: If you have any pre command to run before setting up source
-# PRE_SETUP_SOURCE_COMMAND=""
+# Optional: Clone local manifest right after repo init
+POST_SETUP_SOURCE_COMMAND="git clone https://github.com/shyam-vadgama/local_manifest -b lineage-23.2 .repo/local_manifests || (cd .repo/local_manifests && git pull)"
 
-# Required:
-SETUP_SOURCE_COMMAND=""
+# Required: repo init
+SETUP_SOURCE_COMMAND="repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1"
 
-# Optional: If you have any post command to run after setting up source
-# POST_SETUP_SOURCE_COMMAND=""
+# Required: repo sync
+SYNC_SOURCE_COMMAND="repo sync -c --force-remove-dirty --optimized-fetch --prune --force-sync -j\$(nproc --all)"
 
-# Optional: If you have any pre command to run before syncing source
-# PRE_SYNC_SOURCE_COMMAND=""
+# Required: Build command
+BUILD_VANILLA_COMMAND=". build/envsetup.sh && lunch lineage_warm-ap4a-userdebug && mka bacon"
 
-# Required:
-SYNC_SOURCE_COMMAND=""
-
-# Optional: If you have any post command to run after syncing source
-# POST_SYNC_SOURCE_COMMAND=""
-
-# Optional: If you have any pre command to run before building
-# PRE_BUILD_COMMAND=""
-
-# Required: Build command either for vanilla or gapps or both
-
-# Vanilla build command
-BUILD_VANILLA_COMMAND="bash vanilla.sh || . build/envsetup.sh && brunch $DEVICE"
-
-# GApps build command
+# GApps build command (skip)
 BUILD_GAPPS_COMMAND=""
-
-# Optional: If you have any post command to run after building
-# POST_BUILD_COMMAND=""
 
 # Optional: If you do not want logs
 # LOG_OUTPUT=false
 
 # Optional: if you want updates in telegram
-# TG_TOKEN="" # Your bot token
-# TG_CHAT="" # Your chat id
+# TG_TOKEN=""
+# TG_CHAT=""
 
 # Optional: if you want to remove OTA Package
 REMOVE_OTA_PACKAGE=true
 
 # Optional: if you want to upload to sourceforge
 SF_UPLOAD=false
-# Mandatory if SF_UPLOAD is true
-# SF_USER="" # Sourceforge username
-# SF_PASS="" # Sourceforge password: keep it secret in your GitHub repo settings or as environment variable
-SF_PROJECT="$ROM_NAME" # Sourceforge project name
-SF_DIR="$DEVICE" # Sourceforge directory at project
-SF_HOST="frs.sourceforge.net" # Sourceforge host.
-SF_PATH="/home/pfs/project/$SF_PROJECT/$SF_DIR/" # Full Sourceforge path for uploading with scp
