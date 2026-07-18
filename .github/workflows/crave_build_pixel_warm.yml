@@ -1,0 +1,81 @@
+name: 🏗️ Build PixelOS for warm (crave.io)
+
+on:
+  workflow_dispatch:
+    inputs:
+      clean:
+        description: 'Clean build?'
+        type: boolean
+        default: false
+
+concurrency:
+  group: crave-pixel-warm
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 600
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup crave
+        run: |
+          TAG=$(curl -sL https://api.github.com/repos/accupara/crave/releases/latest | grep tag_name | cut -d'"' -f4)
+          sudo curl -sL "https://github.com/accupara/crave/releases/download/$TAG/crave-$TAG-linux-amd64.bin" -o /usr/local/bin/crave
+          sudo chmod +x /usr/local/bin/crave
+          cat > ~/crave.conf << EOF
+          {
+            "username": "${{ secrets.CRAVE_USERNAME }}",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "${{ secrets.CRAVE_TOKEN }}",
+              "User-Agent": "Crave"
+            },
+            "projects": [],
+            "server": "https://foss.crave.io/api"
+          }
+          EOF
+
+      - name: Install repo
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y repo
+
+      - name: Setup project folder
+        run: |
+          sudo mkdir -p /crave-devspaces
+          sudo chmod 777 /crave-devspaces
+          mkdir -p /crave-devspaces/PixelOS
+          cd /crave-devspaces/PixelOS
+          repo init -u https://github.com/PixelOS-AOSP/android_manifest.git -b sixteen-qpr2 --git-lfs --depth=1
+
+      - name: 🏗️ Build ROM on crave.io
+        run: |
+          cd /crave-devspaces/PixelOS
+          crave run --no-patch -- "rm -rf .repo/local_manifests; \
+          repo init -u https://github.com/PixelOS-AOSP/android_manifest.git -b sixteen-qpr2 --git-lfs --depth=1; \
+          git clone https://github.com/shyam-vadgama/local_manifest/ --depth 1 -b pixel .repo/local_manifests; \
+          /opt/crave/resync.sh; \
+          source build/envsetup.sh; \
+          for combo in pixel_warm-userdebug pixel_warm-user pixel_warm-eng aosp_warm-userdebug; do \
+            lunch \$combo 2>/dev/null && break; \
+          done; \
+          make bacon"
+
+      - name: 📥 Pull build artifacts
+        if: success()
+        run: |
+          mkdir -p out/target/product/warm
+          crave pull out/target/product/warm/ --file "*.zip" --file "*.md5sum" --file "*.sha256sum" -d out/target/product/warm/
+
+      - name: 📦 Create GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="pixelos-$(date +'%Y%m%d-%H%M')"
+          gh release create "$TAG" out/target/product/warm/*.zip \
+            --repo ${{ github.repository }} \
+            --title "PixelOS for warm ($TAG)" \
+            --notes "Automated build via crave.io"
