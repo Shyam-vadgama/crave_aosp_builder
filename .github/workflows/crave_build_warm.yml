@@ -56,9 +56,9 @@ jobs:
           repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs --depth=1; \
           git clone https://github.com/shyam-vadgama/local_manifest/ -b lineage-23.2 .repo/local_manifests; \
           /opt/crave/resync.sh; \
-          source build/envsetup.sh; \
-          lunch lineage_warm-ap2a-userdebug; \
-          mka bacon"
+           source build/envsetup.sh; \
+           lunch lineage_warm-bp4a-userdebug || lunch lineage_warm-ap4a-userdebug || lunch lineage_warm-userdebug; \
+           brunch warm"
 
       - name: 📥 Pull build artifacts
         if: success()
