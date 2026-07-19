@@ -57,7 +57,7 @@ jobs:
           git clone https://github.com/shyam-vadgama/local_manifest/ -b lineage-23.2 .repo/local_manifests; \
           /opt/crave/resync.sh; \
           source build/envsetup.sh; \
-          lunch lineage_warm-ap4a-userdebug; \
+          lunch lineage_warm-ap2a-userdebug; \
           mka bacon"
 
       - name: 📥 Pull build artifacts
