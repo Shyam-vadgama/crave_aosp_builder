@@ -57,7 +57,7 @@ jobs:
           git clone https://github.com/shyam-vadgama/local_manifest/ --depth 1 -b pixel .repo/local_manifests; \
           /opt/crave/resync.sh; \
           source build/envsetup.sh; \
-          for combo in pixel_warm-userdebug pixel_warm-user pixel_warm-eng aosp_warm-userdebug; do \
+          for combo in pixel_warm-userdebug pixel_warm-user pixel_warm-eng aosp_warm-userdebug pixel_warm-ap4a-userdebug pixel_warm-bp4a-useedebug; do \
             lunch \$combo 2>/dev/null && break; \
           done; \
           m pixelos"
