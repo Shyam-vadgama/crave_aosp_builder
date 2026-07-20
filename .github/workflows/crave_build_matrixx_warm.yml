@@ -64,7 +64,7 @@ jobs:
         if: success()
         run: |
           mkdir -p out/target/product/warm
-          crave pull out/target/product/warm/ --file "*.zip" --file "*.md5sum" --file "*.sha256sum" -d out/target/product/warm/
+          crave pull out/target/product/warm/ -d out/target/product/warm/
 
       - name: 📦 Create GitHub Release
         if: success()
