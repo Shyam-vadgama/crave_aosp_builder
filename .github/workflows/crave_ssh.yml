@@ -1,0 +1,42 @@
+name: 🖥️ Crave SSH Terminal
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: crave-ssh
+  cancel-in-progress: false
+
+jobs:
+  ssh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup crave
+        run: |
+          sudo curl -sL "https://github.com/accupara/crave/releases/download/0.2-7220/crave-0.2-7220-linux-amd64.bin" -o /usr/local/bin/crave
+          sudo chmod +x /usr/local/bin/crave
+          cat > ~/crave.conf << EOF
+          { "username": "${{ secrets.CRAVE_USERNAME }}", "headers": { "Content-Type": "application/json", "Authorization": "${{ secrets.CRAVE_TOKEN }}", "User-Agent": "Crave" }, "projects": [], "server": "https://foss.crave.io/api" }
+          EOF
+
+      - name: Install repo
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y repo
+
+      - name: Setup project
+        run: |
+          sudo mkdir -p /crave-devspaces
+          sudo chmod 777 /crave-devspaces
+          for d in Lineage23 PixelOS Matrixx16; do
+            mkdir -p /crave-devspaces/$d
+          done
+
+      - name: 📡 SSH session (tmate)
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+          detached: true
