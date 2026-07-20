@@ -35,8 +35,7 @@ jobs:
             mkdir -p /crave-devspaces/$d
           done
 
-      - name: 📡 SSH session (tmate)
+      - name: 📡 SSH into runner
         uses: mxschmitt/action-tmate@v3
         with:
           limit-access-to-actor: true
-          detached: true
