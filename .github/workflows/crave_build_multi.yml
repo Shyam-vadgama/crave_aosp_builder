@@ -54,24 +54,24 @@ jobs:
           case "${{ matrix.rom }}" in
             lineage)
               echo "FOLDER=Lineage23" >> $GITHUB_ENV
-              echo "REPO_URL=https://github.com/LineageOS/android.git" >> $GITHUB_ENV
-              echo "REPO_BRANCH=lineage-23.2" >> $GITHUB_ENV
+              echo "MANIFEST_URL=https://github.com/LineageOS/android.git" >> $GITHUB_ENV
+              echo "MANIFEST_REPO_BRANCH=lineage-23.2" >> $GITHUB_ENV
               echo "MANIFEST_BRANCH=lineage-23.2" >> $GITHUB_ENV
               echo "TAG_PREFIX=lineage-23.2" >> $GITHUB_ENV
               echo "RELEASE_TITLE=LineageOS 23.2" >> $GITHUB_ENV
               ;;
             pixel)
               echo "FOLDER=PixelOS" >> $GITHUB_ENV
-              echo "REPO_URL=https://github.com/PixelOS-AOSP/android_manifest.git" >> $GITHUB_ENV
-              echo "REPO_BRANCH=sixteen-qpr2" >> $GITHUB_ENV
+              echo "MANIFEST_URL=https://github.com/PixelOS-AOSP/android_manifest.git" >> $GITHUB_ENV
+              echo "MANIFEST_REPO_BRANCH=sixteen-qpr2" >> $GITHUB_ENV
               echo "MANIFEST_BRANCH=pixel" >> $GITHUB_ENV
               echo "TAG_PREFIX=pixelos" >> $GITHUB_ENV
               echo "RELEASE_TITLE=PixelOS" >> $GITHUB_ENV
               ;;
             matrixx)
               echo "FOLDER=Matrixx16" >> $GITHUB_ENV
-              echo "REPO_URL=https://github.com/ProjectMatrixx/android.git" >> $GITHUB_ENV
-              echo "REPO_BRANCH=16.2" >> $GITHUB_ENV
+              echo "MANIFEST_URL=https://github.com/ProjectMatrixx/android.git" >> $GITHUB_ENV
+              echo "MANIFEST_REPO_BRANCH=16.2" >> $GITHUB_ENV
               echo "MANIFEST_BRANCH=matrix" >> $GITHUB_ENV
               echo "TAG_PREFIX=matrixx-16.2" >> $GITHUB_ENV
               echo "RELEASE_TITLE=Matrixx 16.2" >> $GITHUB_ENV
@@ -97,12 +97,12 @@ jobs:
           sudo chmod 777 /crave-devspaces
           mkdir -p /crave-devspaces/${{ env.FOLDER }}
           cd /crave-devspaces/${{ env.FOLDER }}
-          repo init -u ${{ env.REPO_URL }} -b ${{ env.REPO_BRANCH }} --git-lfs --depth=1
+          repo init -u ${{ env.MANIFEST_URL }} -b ${{ env.MANIFEST_REPO_BRANCH }} --git-lfs --depth=1
 
       - name: 🏗️ Build ${{ matrix.rom }}
         run: |
           BASE="rm -rf /tmp/src/android/out /tmp/src/android/device/qcom/sepolicy_vndr /tmp/src/android/.repo/projects /tmp/src/android/.repo/project-objects; \
-            repo init -u ${{ env.REPO_URL }} -b ${{ env.REPO_BRANCH }} --git-lfs --depth=1; \
+            repo init -u ${{ env.MANIFEST_URL }} -b ${{ env.MANIFEST_REPO_BRANCH }} --git-lfs --depth=1; \
             git clone https://github.com/shyam-vadgama/local_manifest/ --depth 1 -b ${{ env.MANIFEST_BRANCH }} .repo/local_manifests; \
             /opt/crave/resync.sh;"
           case "${{ matrix.rom }}" in
