@@ -32,9 +32,9 @@ jobs:
       - id: set-matrix
         run: |
           ROMS='[]'
-          [ "${{ inputs.lineage }}" = "true" ] && ROMS=$(echo "$ROMS" | jq '. + ["lineage"]')
-          [ "${{ inputs.pixel }}" = "true" ] && ROMS=$(echo "$ROMS" | jq '. + ["pixel"]')
-          [ "${{ inputs.matrixx }}" = "true" ] && ROMS=$(echo "$ROMS" | jq '. + ["matrixx"]')
+          [ "${{ inputs.lineage }}" = "true" ] && ROMS=$(echo "$ROMS" | jq -c '. + ["lineage"]')
+          [ "${{ inputs.pixel }}" = "true" ] && ROMS=$(echo "$ROMS" | jq -c '. + ["pixel"]')
+          [ "${{ inputs.matrixx }}" = "true" ] && ROMS=$(echo "$ROMS" | jq -c '. + ["matrixx"]')
           echo "roms=$ROMS" >> $GITHUB_OUTPUT
 
   build:
