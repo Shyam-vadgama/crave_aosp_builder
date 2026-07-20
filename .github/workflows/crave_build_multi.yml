@@ -1,0 +1,143 @@
+name: 🏗️ Build ROMs for warm (Multi-Select)
+
+on:
+  workflow_dispatch:
+    inputs:
+      lineage:
+        description: 'LineageOS 23.2'
+        type: boolean
+        default: false
+      pixel:
+        description: 'PixelOS'
+        type: boolean
+        default: false
+      matrixx:
+        description: 'Matrixx 16.2'
+        type: boolean
+        default: false
+
+concurrency:
+  group: crave-warm
+  cancel-in-progress: false
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      roms: ${{ steps.set-matrix.outputs.roms }}
+    steps:
+      - id: set-matrix
+        run: |
+          ROMS='[]'
+          [ "${{ inputs.lineage }}" = "true" ] && ROMS=$(echo "$ROMS" | jq '. + ["lineage"]')
+          [ "${{ inputs.pixel }}" = "true" ] && ROMS=$(echo "$ROMS" | jq '. + ["pixel"]')
+          [ "${{ inputs.matrixx }}" = "true" ] && ROMS=$(echo "$ROMS" | jq '. + ["matrixx"]')
+          echo "roms=$ROMS" >> $GITHUB_OUTPUT
+
+  build:
+    needs: generate-matrix
+    if: ${{ needs.generate-matrix.outputs.roms != '[]' }}
+    strategy:
+      matrix:
+        rom: ${{ fromJson(needs.generate-matrix.outputs.roms) }}
+      max-parallel: 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 600
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set ROM config
+        run: |
+          case "${{ matrix.rom }}" in
+            lineage)
+              echo "FOLDER=Lineage23" >> $GITHUB_ENV
+              echo "REPO_URL=https://github.com/LineageOS/android.git" >> $GITHUB_ENV
+              echo "REPO_BRANCH=lineage-23.2" >> $GITHUB_ENV
+              echo "MANIFEST_BRANCH=lineage-23.2" >> $GITHUB_ENV
+              echo "TAG_PREFIX=lineage-23.2" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=LineageOS 23.2" >> $GITHUB_ENV
+              ;;
+            pixel)
+              echo "FOLDER=PixelOS" >> $GITHUB_ENV
+              echo "REPO_URL=https://github.com/PixelOS-AOSP/android_manifest.git" >> $GITHUB_ENV
+              echo "REPO_BRANCH=sixteen-qpr2" >> $GITHUB_ENV
+              echo "MANIFEST_BRANCH=pixel" >> $GITHUB_ENV
+              echo "TAG_PREFIX=pixelos" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=PixelOS" >> $GITHUB_ENV
+              ;;
+            matrixx)
+              echo "FOLDER=Matrixx16" >> $GITHUB_ENV
+              echo "REPO_URL=https://github.com/ProjectMatrixx/android.git" >> $GITHUB_ENV
+              echo "REPO_BRANCH=16.2" >> $GITHUB_ENV
+              echo "MANIFEST_BRANCH=matrix" >> $GITHUB_ENV
+              echo "TAG_PREFIX=matrixx-16.2" >> $GITHUB_ENV
+              echo "RELEASE_TITLE=Matrixx 16.2" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Setup crave
+        run: |
+          sudo curl -sL "https://github.com/accupara/crave/releases/download/0.2-7220/crave-0.2-7220-linux-amd64.bin" -o /usr/local/bin/crave
+          sudo chmod +x /usr/local/bin/crave
+          cat > ~/crave.conf << EOF
+          { "username": "${{ secrets.CRAVE_USERNAME }}", "headers": { "Content-Type": "application/json", "Authorization": "${{ secrets.CRAVE_TOKEN }}", "User-Agent": "Crave" }, "projects": [], "server": "https://foss.crave.io/api" }
+          EOF
+
+      - name: Install repo
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y repo
+
+      - name: Setup project folder
+        run: |
+          sudo mkdir -p /crave-devspaces
+          sudo chmod 777 /crave-devspaces
+          mkdir -p /crave-devspaces/${{ env.FOLDER }}
+          cd /crave-devspaces/${{ env.FOLDER }}
+          repo init -u ${{ env.REPO_URL }} -b ${{ env.REPO_BRANCH }} --git-lfs --depth=1
+
+      - name: 🏗️ Build ${{ matrix.rom }}
+        run: |
+          BASE="rm -rf .repo/local_manifests; \
+            repo init -u ${{ env.REPO_URL }} -b ${{ env.REPO_BRANCH }} --git-lfs --depth=1; \
+            git clone https://github.com/shyam-vadgama/local_manifest/ --depth 1 -b ${{ env.MANIFEST_BRANCH }} .repo/local_manifests; \
+            /opt/crave/resync.sh;"
+          case "${{ matrix.rom }}" in
+            lineage)
+              BUILD="source build/envsetup.sh; \
+                lunch lineage_warm-bp4a-userdebug || lunch lineage_warm-ap4a-userdebug || lunch lineage_warm-userdebug; \
+                brunch warm"
+              ;;
+            pixel)
+              BUILD="source build/envsetup.sh; \
+                for combo in pixel_warm-userdebug pixel_warm-user pixel_warm-eng aosp_warm-userdebug pixel_warm-ap4a-userdebug pixel_warm-bp4a-userdebug; do \
+                  lunch \$combo 2>/dev/null && break; \
+                done; \
+                m pixelos"
+              ;;
+            matrixx)
+              BUILD="source build/envsetup.sh; \
+                lunch matrixx_warm-bp4a-user; \
+                make matrixx"
+              ;;
+          esac
+          cd /crave-devspaces/${{ env.FOLDER }}
+          crave run --no-patch -- "$BASE $BUILD"
+
+      - name: 📥 Pull artifacts
+        if: success()
+        run: |
+          mkdir -p out/target/product/warm
+          crave pull out/target/product/warm/ -d out/target/product/warm/
+
+      - name: 📦 Release ${{ matrix.rom }}
+        if: success()
+        run: |
+          TAG="${{ env.TAG_PREFIX }}-$(date +'%Y%m%d-%H%M')"
+          gh release create "$TAG" out/target/product/warm/*.zip \
+            --repo ${{ github.repository }} \
+            --title "${{ env.RELEASE_TITLE }} for warm ($TAG)" \
+            --notes "Automated build via crave.io"
