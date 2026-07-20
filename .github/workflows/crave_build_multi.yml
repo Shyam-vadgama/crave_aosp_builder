@@ -101,7 +101,7 @@ jobs:
 
       - name: 🏗️ Build ${{ matrix.rom }}
         run: |
-          BASE="rm -rf .repo/local_manifests; \
+          BASE="rm -rf /tmp/src/android; \
             repo init -u ${{ env.REPO_URL }} -b ${{ env.REPO_BRANCH }} --git-lfs --depth=1; \
             git clone https://github.com/shyam-vadgama/local_manifest/ --depth 1 -b ${{ env.MANIFEST_BRANCH }} .repo/local_manifests; \
             /opt/crave/resync.sh;"
