@@ -52,7 +52,7 @@ jobs:
       - name: 🏗️ Build ROM on crave.io
         run: |
           cd /crave-devspaces/PixelOS
-          crave run --no-patch -- "rm -rf /tmp/src/android; \
+          crave run --no-patch -- "rm -rf /tmp/src/android/.repo /tmp/src/android/out; \
           repo init -u https://github.com/PixelOS-AOSP/android_manifest.git -b sixteen-qpr2 --git-lfs --depth=1; \
           git clone https://github.com/shyam-vadgama/local_manifest/ --depth 1 -b pixel .repo/local_manifests; \
           /opt/crave/resync.sh; \
