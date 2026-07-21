@@ -65,6 +65,7 @@ jobs:
       - name: 📥 Pull build artifacts
         if: success()
         run: |
+          cd /crave-devspaces/PixelOS
           mkdir -p out/target/product/warm
           crave pull out/target/product/warm/ -d out/target/product/warm/
 

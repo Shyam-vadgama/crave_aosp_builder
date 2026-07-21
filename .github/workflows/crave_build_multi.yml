@@ -130,6 +130,7 @@ jobs:
       - name: 📥 Pull artifacts
         if: success()
         run: |
+          cd /crave-devspaces/${{ env.FOLDER }}
           mkdir -p out/target/product/warm
           crave pull out/target/product/warm/ -d out/target/product/warm/
 
