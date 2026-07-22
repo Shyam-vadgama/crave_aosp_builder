@@ -137,6 +137,7 @@ jobs:
       - name: 📦 Release ${{ matrix.rom }}
         if: success()
         run: |
+          cd /crave-devspaces/${{ env.FOLDER }}
           TAG="${{ env.TAG_PREFIX }}-$(date +'%Y%m%d-%H%M')"
           gh release create "$TAG" out/target/product/warm/*.zip \
             --repo ${{ github.repository }} \
